@@ -35,7 +35,9 @@ RUN set -eux; \
   done
 
 RUN pnpm install --no-frozen-lockfile
-RUN pnpm build:docker
+# OpenClaw v2026.3.13-1 expects the generated A2UI bundle to exist before `build:docker`.
+# The bundle is gitignored upstream, so Docker builds must generate it explicitly.
+RUN pnpm canvas:a2ui:bundle && pnpm build:docker
 ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:install && pnpm ui:build
 
