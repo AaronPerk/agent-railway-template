@@ -62,7 +62,6 @@ RUN set -eux; \
     python3 \
     python3-venv \
     tini; \
-    vim; \
   if [ -n "${ENABLE_DESKTOP:-}" ]; then \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       at-spi2-core \
