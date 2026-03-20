@@ -48,43 +48,42 @@ RUN pnpm ui:install && pnpm ui:build
 # preserving the existing Node 22 / corepack behavior.
 FROM debian:stable-slim
 
+ARG ENABLE_DESKTOP
+
 ENV NODE_ENV=production
-ENV DISPLAY=:99
-ENV XVFB_WHD=1280x800x24
-ENV XDG_RUNTIME_DIR=/tmp/xdg-runtime
-ENV XDG_CURRENT_DESKTOP=XFCE
-ENV XDG_SESSION_DESKTOP=xfce
-ENV DESKTOP_SESSION=xfce
-ENV NO_AT_BRIDGE=0
-ENV GTK_MODULES=gail:atk-bridge
 
 COPY --from=openclaw-build /usr/local/ /usr/local/
 
-RUN apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    at-spi2-core \
+RUN set -eux; \
+  apt-get update; \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
-    dbus-x11 \
-    gir1.2-gtk-3.0 \
     python3 \
-    python3-dogtail \
-    python3-gi \
-    python3-pyatspi \
     python3-venv \
-    tini \
-    wmctrl \
-    x11-utils \
-    xauth \
-    xdotool \
-    xvfb \
-    xfce4-panel \
-    xfce4-session \
-    xfce4-settings \
-    xfdesktop4 \
-    xfwm4 \
-    chromium \
-  && rm -rf /var/lib/apt/lists/*
+    tini; \
+    vim; \
+  if [ -n "${ENABLE_DESKTOP:-}" ]; then \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      at-spi2-core \
+      dbus-x11 \
+      gir1.2-gtk-3.0 \
+      python3-dogtail \
+      python3-gi \
+      python3-pyatspi \
+      wmctrl \
+      x11-utils \
+      xauth \
+      xdotool \
+      xvfb \
+      xfce4-panel \
+      xfce4-session \
+      xfce4-settings \
+      xfdesktop4 \
+      xfwm4 \
+      chromium; \
+  fi; \
+  rm -rf /var/lib/apt/lists/*
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
@@ -120,7 +119,8 @@ COPY src ./src
 # IMPORTANT: Do not set a default PORT here.
 # Railway injects PORT at runtime and routes traffic to that port.
 # If we force a different port, deployments can come up but the domain will route elsewhere.
-EXPOSE 8080
+ARG DEV_PORT
+EXPOSE 8080 ${DEV_PORT}
 
 # Ensure PID 1 reaps zombies and forwards signals.
 ENTRYPOINT ["/usr/local/bin/container-entrypoint.sh"]
