@@ -1,6 +1,9 @@
 # Build openclaw from source to avoid npm packaging gaps (some dist files are not shipped).
 FROM node:22-bookworm AS openclaw-build
 
+ARG OPENCLAW_GIT_REF=main
+ARG AGENCY_AGENTS_GIT_REF=main
+
 # Dependencies needed for openclaw build
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -21,8 +24,13 @@ RUN corepack enable
 WORKDIR /openclaw
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
-ARG OPENCLAW_GIT_REF=main
 RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/AaronPerk/openclaw.git .
+
+WORKDIR /agency-agents
+RUN git clone --depth 1 --branch "${AGENCY_AGENTS_GIT_REF}" https://github.com/msitarzewski/agency-agents.git . \
+  && ./scripts/convert.sh --tool openclaw
+
+WORKDIR /openclaw
 
 # Patch: relax version requirements for packages that may reference unpublished versions.
 # Apply to all extension package.json files to handle workspace protocol (workspace:*).
@@ -61,6 +69,7 @@ RUN set -eux; \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
+    cargo \
     chromium \
     fonts-liberation \
     libasound2 \
@@ -86,6 +95,7 @@ RUN set -eux; \
     libxrandr2 \
     python3 \
     python3-venv \
+    rustc \
     tini; \
   if [ -n "${ENABLE_DESKTOP:-}" ]; then \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -128,10 +138,16 @@ RUN npm ci --include=dev
 
 # Copy built openclaw
 COPY --from=openclaw-build /openclaw /openclaw
+COPY --from=openclaw-build /agency-agents /agency-agents
 
 # Provide an openclaw executable
 RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"' > /usr/local/bin/openclaw \
   && chmod +x /usr/local/bin/openclaw
+
+WORKDIR /agency-agents
+RUN ./scripts/install.sh --tool openclaw --no-interactive
+
+WORKDIR /app
 
 COPY scripts/start-desktop.sh scripts/container-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/start-desktop.sh /usr/local/bin/container-entrypoint.sh
