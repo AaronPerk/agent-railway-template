@@ -321,6 +321,9 @@ function buildVibeTunnelPatchedClientBundle() {
     ["\"/favicon-32.png", `\"${VIBETUNNEL_BASE_PATH}/favicon-32.png`],
     ["\"/favicon-16.png", `\"${VIBETUNNEL_BASE_PATH}/favicon-16.png`],
     ["\"/manifest.json", `\"${VIBETUNNEL_BASE_PATH}/manifest.json`],
+    ["useBinaryMode:!1", "useBinaryMode:!0"],
+    ["this.useBinaryMode=!1", "this.useBinaryMode=!0"],
+    ["useBinaryMode??!1", "useBinaryMode??!0"],
   ];
 
   return replacements.reduce((output, [needle, replacement]) => output.replaceAll(needle, replacement), source);

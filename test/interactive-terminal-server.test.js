@@ -29,6 +29,9 @@ test("wrapper patches vibetunnel assets for the /vibetunnel mount and stops both
 
   assert.match(src, /function buildVibeTunnelPatchedIndex\(/);
   assert.match(src, /function buildVibeTunnelPatchedClientBundle\(/);
+  assert.match(src, /\["useBinaryMode:!1", "useBinaryMode:!0"\]/);
+  assert.match(src, /\["this\.useBinaryMode=!1", "this\.useBinaryMode=!0"\]/);
+  assert.match(src, /\["useBinaryMode\?\?!1", "useBinaryMode\?\?!0"\]/);
   assert.match(src, /sendPatchedVibeTunnelIndex\(res\)/);
   assert.match(src, /sendPatchedVibeTunnelBundle\(res\)/);
   assert.match(src, /async function stopGateway\(/);
