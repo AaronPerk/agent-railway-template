@@ -1,7 +1,7 @@
 # Build openclaw from source to avoid npm packaging gaps (some dist files are not shipped).
 FROM node:22-bookworm AS openclaw-build
 
-ARG OPENCLAW_GIT_REF=main
+ARG OPENCLAW_GIT_REF=v2026.4.1
 
 # Dependencies needed for openclaw build
 RUN apt-get update \
@@ -23,7 +23,7 @@ RUN corepack enable
 WORKDIR /openclaw
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
-RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/AaronPerk/openclaw.git .
+RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
 WORKDIR /openclaw
 
@@ -68,7 +68,10 @@ RUN set -eux; \
     ca-certificates \
     cargo \
     chromium \
+    curl \
     fonts-liberation \
+    git \
+    jq \
     libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
@@ -90,10 +93,13 @@ RUN set -eux; \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
+    lsof \
     make \
+    procps \
     g++ \
     libpam0g-dev \
     python3 \
+    python3-pip \
     python3-venv \
     rustc \
     tini; \
@@ -116,6 +122,7 @@ RUN set -eux; \
       xfdesktop4 \
       xfwm4; \
   fi; \
+  PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install --no-cache-dir PyYAML; \
   rm -rf /var/lib/apt/lists/*
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
